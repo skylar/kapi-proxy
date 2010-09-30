@@ -6,6 +6,7 @@ var store = require('./dataStore');
 
 // CONSTANTS
 var refreshRate = 5*60*1000;
+var portNumber = 5482; // k-i-v-a
 
 // START crawler
 var onIndexUpdateComplete = function() {
@@ -19,6 +20,6 @@ crawler.updateIdIndex(onIndexUpdateComplete);
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'application/json'});
   res.end(json.stringify(store.getIds()));
-}).listen(8124, "127.0.0.1");
+}).listen(5482);
 
-console.log('Server running at http://127.0.0.1:8124/');
+console.log('Server running on port ' + portNumber);
