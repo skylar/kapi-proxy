@@ -11,3 +11,7 @@ exports.addToIndex = function(ids) {
 exports.getIds = function() {
 	return loanIds;
 };
+
+exports.clearIndex = function() {
+	loanIds = [];
+};

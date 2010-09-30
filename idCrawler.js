@@ -20,6 +20,7 @@ var stripObjectsToIds = function(objects) {
 var updateStoreFromCache = function() {
 	var k;
 	
+	store.clearIndex();
 	for(k=0;k<idCache.length;k++) {
 		store.addToIndex(idCache[k]);
 	}
