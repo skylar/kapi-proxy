@@ -5,7 +5,7 @@ var store = require('./dataStore');
 // MAIN
 var maxConnections = 5;
 var currentPage = 0;
-var lastPage,connectionCount,completionCallback,idCache = [];
+var lastPage,connectionCount,completionCallback,progressCallback,idCache = [];
 
 var stripObjectsToIds = function(objects) {
 	var k;
@@ -31,14 +31,14 @@ var updateStoreFromCache = function() {
 };
 
 var onDataReturn = function(response) {
-	var fetchedPage = response.paging.page;
+	var fetchedPage = response.paging.page, ids;
 	
 	connectionCount--;
-	idCache[fetchedPage-1] = stripObjectsToIds(response.loans);
+	idCache[fetchedPage-1] = ids = stripObjectsToIds(response.loans);
 
 	lastPage = response.paging.pages;
-	console.log("FOUND: " + fetchedPage + " of " + lastPage + " ( " + response.paging.total + " total loans)");
-	
+	progressCallback(ids);
+		
 	if(currentPage < lastPage) { getMorePages();}
 	else if(connectionCount < 1) { updateStoreFromCache(); }
 };
@@ -51,7 +51,7 @@ var getMorePages = function() {
 	}
 };
 
-exports.updateIdIndex = function(callback) {
+exports.updateIdIndex = function(callback,progCallback) {
 	// we can't update if we're in the middle of an update
 	if(currentPage) return false;
 	
@@ -62,6 +62,7 @@ exports.updateIdIndex = function(callback) {
 	idCache = [];
 	getMorePages();
 	completionCallback = callback;
+	progressCallback = progCallback;
 	
 	return true;
 };

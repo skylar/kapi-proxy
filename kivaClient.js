@@ -4,15 +4,32 @@ var http = require('http');
 
 // CONSTANTS
 var apiHost = "api.kivaws.org";
-var loanListMethod = "/v1/loans/newest.json";
+var loanListMethod = "/v1/loans/newest";
+var loanDetailMethod = "/v1/loans/";
+var appId = "org.kivaenfrancais.kapi-proxy";
 
 // METHODS
 exports.fetchPage = function(pageNumber, callback) {
-	var httpClient = http.createClient(80, apiHost);
-	var method = loanListMethod + "?page=" + pageNumber.toString(10);
-	console.log(method);
+	sendApiRequest(loanListMethod,
+		{page:pageNumber.toString(10)}, callback);
+};
+
+exports.fetchLoanDetail = function(loanIds, callback) {
+	sendApiRequest(loanDetailMethod + loanIds.join(','),
+		{},callback);
+}
+
+var sendApiRequest = function(method,parameters,callback) {
+	var httpClient = http.createClient(80, apiHost),
+		preParams = [],
+		request;
+	if(!parameters) { parameters = {};}
+	parameters['app_id'] = appId;
 	
-	var request = httpClient.request('GET', method, {'host':apiHost});
+	method += ".json?" + require('querystring').stringify(parameters);
+//	console.log("Requesting " + method);
+	
+	request = httpClient.request('GET', method, {'host':apiHost});
 	request.end();
 	
 	request.on('response', function(response) {
@@ -25,6 +42,5 @@ exports.fetchPage = function(pageNumber, callback) {
 			var jsonResponse = json.parse(totalResponse);
 			callback(jsonResponse);
 		});		
-	});
-};
-
+	});	
+}
