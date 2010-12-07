@@ -35,7 +35,7 @@ var updateStoreFromCache = function() {
 
 var onDataReturn = function(response) {
 	var fetchedPage = response.paging.page, ids;
-	console.log("Got page " + fetchedPage);
+//	console.log("Got page " + fetchedPage);
 	
 	idCache[fetchedPage-1] = ids = stripObjectsToIds(response.loans);
 

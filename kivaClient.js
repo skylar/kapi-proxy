@@ -21,7 +21,7 @@ exports.fetchPage = function(pageNumber, callback) {
 exports.fetchLoanDetail = function(loanIds, callback) {
 	var k=0,length = loanIds.length;
 
-console.log("going to get " + loanIds.length + " loans");
+//console.log("going to get " + loanIds.length + " loans");
 	for(k=0;k<length;k+=pageSize) {
 		_rawFetchLoanDetail(loanIds.slice(k,k+pageSize), callback);
 	}

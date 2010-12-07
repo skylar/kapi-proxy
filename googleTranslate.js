@@ -23,7 +23,7 @@ exports.translate = function(requests, callback) {
 	var countdown = requests.length, easyBatch = [];
 	var sha1;
 	
-	console.log("Pre-processing translate request of size: " + requests.length);
+//	console.log("Pre-processing translate request of size: " + requests.length);
 	// first, get strings we can from the db
 	requests.forEach(function(request) {
 		sha1 = require('crypto').createHash('sha1');
@@ -39,7 +39,7 @@ exports.translate = function(requests, callback) {
 			// once all the db fetches have come back
 			if(countdown <= 0) {
 				// send on the already-translated entries
-			console.log('done w/ db entries');
+//			console.log('done w/ db entries');
 				callback(easyBatch);
 				// ask google to do the work for the rest
 				_fetchUntranslatedEntries(requests, callback);

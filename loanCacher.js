@@ -5,11 +5,25 @@ var google = require('./googleTranslate');
 var json = require('json');
 
 // DATA
+var cacheDb = {};
 var db = require('./keyDb').db();
 db.init('loans.db');
 
 exports.stringDataForLoans = function(ids, callback) {
-	db.retrieve(ids, callback);
+	var subset = [], data = [];
+	
+	ids.forEach( function(id) {
+		if(cacheDb.hasOwnProperty(id)) {
+			data.push({k: id, v: cacheDb[id] });
+		} else { subset.push(id); }
+	})
+	if(subset.length === 0) { callback(data); }
+	else {
+//		console.log("going to the DB for this one...")
+		db.retrieve(subset, function(rows) {
+			callback(data.concat(rows));
+		});
+	}
 }
 
 exports.cacheLoansBySummary = function(loans) {
@@ -25,8 +39,10 @@ exports.cacheLoansBySummary = function(loans) {
 				if(object && loan && (object.basket_amount != loan.basket_amount || object.funded_amount != loan.funded_amount)) { 
 					object.basket_amount = loan.basket_amount;
 					object.funded_amount = loan.funded_amount;
+					_storeLoanCacheProxy(loan.id, json.stringify(object));
+				} else {
+					cacheDb[loan.id] = data;
 				}
-				db.store(loan.id, json.stringify(object));
 			}
 			else { subset.push(loan.id); }
 			countdown--;
@@ -37,6 +53,13 @@ exports.cacheLoansBySummary = function(loans) {
 		});
 	})
 };
+
+// updates the loan in our poor-man's proxy
+//  as well as the db.
+var _storeLoanCacheProxy = function(id,data) {
+	cacheDb[id] = data;
+	db.store(id, data);
+}
 
 var _didFindLoans = function(response) {	
 	if(response.loans) {
@@ -53,7 +76,7 @@ var _didFindLoans = function(response) {
 		
 		// store the data
 		loans.forEach( function(loan) {
-			db.store(loan.id, loan);
+			_storeLoanCacheProxy(loan.id, loan);
 		});
 	}
 };
@@ -67,7 +90,7 @@ var _translationHandler = function(batches) {
 				if(data) {
 					object = json.parse(data);
 					object.use_intl = {texts:{fr:batch.translation}};
-					db.store(batch.id, json.stringify(object));
+					_storeLoanCacheProxy(batch.id, json.stringify(object));
 //					console.log('How about that! I translated something.');
 				}
 			});

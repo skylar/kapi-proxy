@@ -42,7 +42,7 @@ http.createServer(function (req, res) {
 		if(ids[0]) {
 			ids = ids[0].split(',');
 			cacher.stringDataForLoans(ids, function(rows) {
-				console.log('returning ROWS of ' + rows.length);
+//				console.log('returning ROWS of ' + rows.length);
 				rows.forEach(function(row) {
 					loans.push(row.v);
 				});
@@ -51,12 +51,12 @@ http.createServer(function (req, res) {
 		} else {
 			sendDataAsJsonResponse([], res);
 		}
-	} else if (url.query && url.query.q) {
-		// TRANSLATION TESTING
-		require('./googleClient').translateStrings(url.query.q.split(','), 
-			function(t) { console.log(t); 
-				sendDataAsJsonResponse(t, res);
-			})
+	// } else if (url.query && url.query.q) {
+	// 	// TRANSLATION TESTING
+	// 	require('./googleClient').translate(url.query.q.split(','), 
+	// 		function(t) { console.log(t); 
+	// 			sendDataAsJsonResponse(t, res);
+	// 		})
 	} else {
 		sendDataAsJsonResponse({error:'Unknown Method'}, res);
 	}
