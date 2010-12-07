@@ -1,11 +1,12 @@
 // REQUIRES
 var kiva = require('./kivaClient');
 var store = require('./dataStore');
+var tasks = require('tasks');
 
-// MAIN
-var maxConnections = 5;
-var currentPage = 0;
-var lastPage,connectionCount,completionCallback,progressCallback,idCache = [];
+// DATA
+var queue = tasks.queue("kc",5);
+var busy = false;
+var completionCallback,lastPage,progressCallback,idCache = [];
 
 var stripObjectsToIds = function(objects) {
 	var k;
@@ -20,49 +21,55 @@ var stripObjectsToIds = function(objects) {
 var updateStoreFromCache = function() {
 	var k;
 	
+	if(!busy) return;
 	store.clearIndex();
 	for(k=0;k<idCache.length;k++) {
 		store.addToIndex(idCache[k]);
 	}
 	idCache = [];
-	currentPage = 0;
+	busy = false;
 
 	completionCallback();
 };
 
 var onDataReturn = function(response) {
 	var fetchedPage = response.paging.page, ids;
+	console.log("Got page " + fetchedPage);
 	
-	connectionCount--;
 	idCache[fetchedPage-1] = ids = stripObjectsToIds(response.loans);
 
 	lastPage = response.paging.pages;
 	progressCallback(ids);
-		
-	if(currentPage < lastPage) { getMorePages();}
-	else if(connectionCount < 1) { updateStoreFromCache(); }
 };
 
-var getMorePages = function() {
-	while(connectionCount < maxConnections) {
-		currentPage++;
-		kiva.fetchPage(currentPage, onDataReturn);
-		connectionCount++;
+var pageFetcher = function(k) {
+	return function(task) {
+		kiva.fetchPage(k, function(r) {onDataReturn(r); task.done();} );
 	}
 };
 
+var getTheOtherPages = function() {
+	for(k=2;k<=lastPage;k++) {
+		queue.push(pageFetcher(k));
+	}
+}
+
 exports.updateIdIndex = function(callback,progCallback) {
 	// we can't update if we're in the middle of an update
-	if(currentPage) return false;
+	if(busy) return false;
 	
 	// otherwise, reset the state machine
-	currentPage = 0;
-	lastPage = 1000;
-	connectionCount = 0;
+	busy = true;
 	idCache = [];
-	getMorePages();
 	completionCallback = callback;
 	progressCallback = progCallback;
+	lastPage = 1;
+	queue = tasks.queue("kc",5); // new queue to avoid confusion
+	
+	firstPage = tasks.task(pageFetcher(1));
+	firstPage.on('completed',getTheOtherPages);
+	queue.push(firstPage);
+	queue.on('completed',updateStoreFromCache);
 	
 	return true;
 };

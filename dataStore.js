@@ -1,7 +1,7 @@
 var json = require('json');
 
 var loanIds = [];
-var loans = []
+var loans = [];
 
 exports.addToIndex = function(ids) {
 	var k;

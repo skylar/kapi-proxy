@@ -7,6 +7,10 @@ var apiHost = "api.kivaws.org";
 var loanListMethod = "/v1/loans/newest";
 var loanDetailMethod = "/v1/loans/";
 var appId = "org.kivaenfrancais.kapi-proxy";
+var pageSize = 10;
+
+// DATA
+var queue = require('tasks').queue("kivaClient",5);
 
 // METHODS
 exports.fetchPage = function(pageNumber, callback) {
@@ -15,8 +19,19 @@ exports.fetchPage = function(pageNumber, callback) {
 };
 
 exports.fetchLoanDetail = function(loanIds, callback) {
-	sendApiRequest(loanDetailMethod + loanIds.join(','),
-		{},callback);
+	var k=0,length = loanIds.length;
+
+console.log("going to get " + loanIds.length + " loans");
+	for(k=0;k<length;k+=pageSize) {
+		_rawFetchLoanDetail(loanIds.slice(k,k+pageSize), callback);
+	}
+}
+
+var _rawFetchLoanDetail = function(ids, callback) {
+	queue.push(function(t) {
+		sendApiRequest(loanDetailMethod + ids.join(',')
+		,{}, function(json) { callback(json); t.done(); });
+	});
 }
 
 var sendApiRequest = function(method,parameters,callback) {

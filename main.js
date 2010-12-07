@@ -20,10 +20,11 @@ var onIndexUpdateProgress = function(ids) {
 	cacher.cacheLoansById(ids);
 };
 
-var sendArrayAsJsonResponse = function(arr, res) {
+var sendDataAsJsonResponse = function(data, res) {
+	if('string' !== typeof(data)) { data = json.stringify(data);  }
+	
 	res.writeHead(200, {'Content-Type': 'application/json'});
-	res.end(json.stringify(arr));
-	console.log('Response sent.');
+	res.end(data);
 }
 
 crawler.updateIdIndex(onIndexUpdateComplete, onIndexUpdateProgress);
@@ -34,21 +35,30 @@ http.createServer(function (req, res) {
 		ids, loans = [];
 	
 	if(url.pathname === '/a/loans/fundraising/ids.json') {
-		sendArrayAsJsonResponse(store.getIds(), res);
+		sendDataAsJsonResponse(store.getIds(), res);
 	} else if (url.pathname.slice(0,9) === '/a/loans/') {
 		ids = url.pathname.slice(9);
 		ids = ids.split('.');
 		if(ids[0]) {
 			ids = ids[0].split(',');
-			ids.forEach( function(id) {
-				if(store.getLoanData(id)) {
-					loans.push(store.getLoanData(id));
-				}
+			cacher.stringDataForLoans(ids, function(rows) {
+				console.log('returning ROWS of ' + rows.length);
+				rows.forEach(function(row) {
+					loans.push(row.v);
+				});
+				return sendDataAsJsonResponse('['+loans.join(',')+']', res);
 			})
+		} else {
+			sendDataAsJsonResponse([], res);
 		}
-		sendArrayAsJsonResponse(loans, res);
+	} else if (url.query && url.query.q) {
+		// TRANSLATION TESTING
+		require('./googleClient').translateStrings(url.query.q.split(','), 
+			function(t) { console.log(t); 
+				sendDataAsJsonResponse(t, res);
+			})
 	} else {
-		sendArrayAsJsonResponse({error:'Unknown Method'}, res);
+		sendDataAsJsonResponse({error:'Unknown Method'}, res);
 	}
 }).listen(5482);
 
