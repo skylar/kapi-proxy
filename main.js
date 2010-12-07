@@ -15,9 +15,9 @@ var onIndexUpdateComplete = function() {
 	setTimeout(function() {crawler.updateIdIndex(onIndexUpdateComplete, onIndexUpdateProgress);}, refreshRate);
 };
 
-var onIndexUpdateProgress = function(ids) {
+var onIndexUpdateProgress = function(loans) {
 //	console.log("Found IDs: " + ids);
-	cacher.cacheLoansById(ids);
+	cacher.cacheLoansBySummary(loans);
 };
 
 var sendDataAsJsonResponse = function(data, res) {

@@ -12,13 +12,23 @@ exports.stringDataForLoans = function(ids, callback) {
 	db.retrieve(ids, callback);
 }
 
-exports.cacheLoansById = function(ids) {
-	var countdown = ids.length, subset = [];
+exports.cacheLoansBySummary = function(loans) {
+	var countdown = loans.length, subset = [];
 	
 	// figure out which we don't have - only get those
-	ids.forEach(function(id) {
-		db.retrieveOne(id,function(data) {
-			if(!data) { subset.push(id); }
+	loans.forEach(function(loan) {
+		db.retrieveOne(loan.id,function(data) {
+			var object;
+			if(data) {
+				object = json.parse(data);
+				// update basket & funded amounts, if necessary
+				if(object && loan && (object.basket_amount != loan.basket_amount || object.funded_amount != loan.funded_amount)) { 
+					object.basket_amount = loan.basket_amount;
+					object.funded_amount = loan.funded_amount;
+				}
+				db.store(loan.id, json.stringify(object));
+			}
+			else { subset.push(loan.id); }
 			countdown--;
 			if(countdown <= 0) {
 //				console.log("Loans omitted: " + (ids.length - subset.length));

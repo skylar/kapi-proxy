@@ -11,6 +11,7 @@ var completionCallback,lastPage,progressCallback,idCache = [];
 var stripObjectsToIds = function(objects) {
 	var k;
 	var ids = [];
+	var amountsUpdate = [];
 	
 	for(k=0;k<objects.length;k++) {
 		ids.push(objects[k].id);
@@ -39,7 +40,7 @@ var onDataReturn = function(response) {
 	idCache[fetchedPage-1] = ids = stripObjectsToIds(response.loans);
 
 	lastPage = response.paging.pages;
-	progressCallback(ids);
+	progressCallback(response.loans);
 };
 
 var pageFetcher = function(k) {
