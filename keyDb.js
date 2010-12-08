@@ -9,7 +9,8 @@ var schema = 'CREATE TABLE IF NOT EXISTS t (k TEXT PRIMARY KEY, v TEXT, f INTEGE
 var store_sql = 'REPLACE INTO t (k,v,f,ts) VALUES (?,?,1,?)';
 var retrieve_sql = 'SELECT k,v from t WHERE k IN ';
 var retrieve_one_sql = 'SELECT v from t WHERE k = ?';
-var flag_save_sql = 'UPDATE t SET f=(k IN ';
+var unflag_sql = 'UPDATE t SET f=1 WHERE k IN ';
+var flag_save_sql = 'UPDATE t SET f=1 WHERE k IN ';
 var flush_sql = 'DELETE FROM t WHERE f=0 AND ts < ?';
 
 var create_db = function() {
@@ -62,7 +63,12 @@ var create_db = function() {
 	},
 
 	that.flagForSave = function(ids) {
-		my.db.execute(flag_save_sql + my._arrayBinding(ids.length) + ')', ids, function(error) { if(error) throw error;} );
+		var k, subset;
+		my.db.execute(unflag_sql, function(error) { if(error) throw error;});
+		for(k=0;k<ids.length;k+=10) {			
+			subset = ids.slice(k,k+10);
+		}
+		my.db.execute(flag_save_sql + my._arrayBinding(subset.length), subset, function(error) { if(error) throw error;} );
 	},
 
 	that.flush = function(ageInSeconds) {

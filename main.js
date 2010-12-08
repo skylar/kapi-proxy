@@ -11,7 +11,9 @@ var portNumber = 5482; // k-i-v-a
 
 // START crawler
 var onIndexUpdateComplete = function() {
-	console.log("Index update complete. Total loans: " + store.getIds().length);
+	var ids = store.getIds();
+	console.log("Index update complete. Total loans: " + ids.length);
+	cacher.clearCache(ids);
 	setTimeout(function() {crawler.updateIdIndex(onIndexUpdateComplete, onIndexUpdateProgress);}, refreshRate);
 };
 
@@ -43,10 +45,16 @@ http.createServer(function (req, res) {
 			ids = ids[0].split(',');
 			cacher.stringDataForLoans(ids, function(rows) {
 //				console.log('returning ROWS of ' + rows.length);
+				var first = true;
+				res.writeHead(200, {'Content-Type': 'application/json'});
 				rows.forEach(function(row) {
-					loans.push(row.v);
+//					loans.push(row.v);
+					if(first) { res.write('[' + row.v); }
+					else { res.write(',' + row.v); }
+					first = false;
 				});
-				return sendDataAsJsonResponse('['+loans.join(',')+']', res);
+				return res.end(']');
+//				return sendDataAsJsonResponse('['+loans.join(',')+']', res);
 			})
 		} else {
 			sendDataAsJsonResponse([], res);

@@ -26,6 +26,21 @@ exports.stringDataForLoans = function(ids, callback) {
 	}
 }
 
+exports.clearCache = function(ids) {
+	var newCache = [];
+	// remove save flags for all but designated loans
+//	db.flagForSave(ids);
+	// flush all expired loans older than 1 hour
+//	setTimeout(function() { db.flush(60*60); }, 30*1000);
+
+	ids.forEach(function(id) {
+		if(cacheDb.hasOwnProperty(id)) {
+			newCache[id] = cacheDb[id];
+		}
+	});
+	cacheDb = newCache;
+}
+
 exports.cacheLoansBySummary = function(loans) {
 	var countdown = loans.length, subset = [];
 	
